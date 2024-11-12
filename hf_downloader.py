@@ -6,16 +6,22 @@ from typing import Optional
 class HuggingFaceDownloader:
     @classmethod
     def INPUT_TYPES(cls):
-        # Dynamically list model download directories
+        # Correct path to models directory
         base_models_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'models')
-        model_dirs = [d for d in os.listdir(base_models_path) 
-                      if os.path.isdir(os.path.join(base_models_path, d))]
+        
+        try:
+            # List only directories in the models path
+            model_dirs = [d for d in os.listdir(base_models_path) 
+                          if os.path.isdir(os.path.join(base_models_path, d))]
+        except FileNotFoundError:
+            # Fallback to an empty list if directory not found
+            model_dirs = []
         
         return {
             "required": {
                 "repo_id": ("STRING", {"default": ""}),
                 "filename": ("STRING", {"default": ""}),
-                "download_directory": (model_dirs, {}),
+                "download_directory": (model_dirs or ["models"], {}),
                 "hf_token": ("STRING", {
                     "default": "",
                     "multiline": False,
@@ -33,18 +39,22 @@ class HuggingFaceDownloader:
                        hf_token: Optional[str] = None):
         try:
             # Construct full download path
-            base_models_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'models')
+            base_models_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'models')
             full_download_path = os.path.join(base_models_path, download_directory)
+            
+            # Ensure the download directory exists
+            os.makedirs(full_download_path, exist_ok=True)
             
             # Prepare token
             token = hf_token.strip() if hf_token else None
             
-            # Download the file
+            # Download the file directly to the specified directory
             downloaded_file_path = hf_hub_download(
                 repo_id=repo_id, 
                 filename=filename, 
                 token=token,
-                cache_dir=full_download_path
+                local_dir=full_download_path,
+                local_dir_use_symlinks=False  # Ensure actual file is downloaded
             )
             
             return (downloaded_file_path,)
