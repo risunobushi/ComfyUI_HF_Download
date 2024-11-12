@@ -7,7 +7,7 @@ class HuggingFaceDownloader:
     @classmethod
     def INPUT_TYPES(cls):
         # Dynamically list model download directories
-        base_models_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'models')
+        base_models_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'models')
         model_dirs = [d for d in os.listdir(base_models_path) 
                       if os.path.isdir(os.path.join(base_models_path, d))]
         
